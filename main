@@ -1,0 +1,29 @@
+train_images, train_labels, val_images, val_labels, test_images, test_labels = load_data()
+train_images, train_labels, val_images, val_labels, test_images, test_labels = preprocess_data(train_images, train_labels, val_images, val_labels, test_images, test_labels)
+
+param_grid = {
+        'learning_rate': [0.001, 0.01, 0.1],
+        'hidden_size': [32, 64, 128],
+        'reg_lambda': [0.001, 0.01, 0.1]
+    }
+
+best_model = None
+best_val_accuracy = 0.0
+num_epochs = 100
+batch_size = 64
+
+for params in ParameterGrid(param_grid):
+    model = train(train_images, train_labels, params['hidden_size'], params['reg_lambda'], params['learning_rate'], num_epochs, batch_size, val_images, val_labels)
+    val_predictions = model.predict(val_images)
+    val_accuracy = np.mean(val_predictions == np.argmax(val_labels, axis=1))
+    print(f'Validation Accuracy: {val_accuracy:.4f} (learning_rate={params["learning_rate"]}, hidden_size={params["hidden_size"]}, reg_lambda={params["reg_lambda"]})')
+    if val_accuracy > best_val_accuracy:
+        best_val_accuracy = val_accuracy
+        best_model = model
+
+model = train(train_images, train_labels, hidden_size, reg_lambda, learning_rate, num_epochs, batch_size, val_images, val_labels)
+
+np.save('model_weights.npy', model.W1)
+np.save('model_biases.npy', model.b1)
+
+test(model, test_images, test_labels)
